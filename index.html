@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Geo Locked Form Access</title>
+</head>
+
+<body style="text-align:center; font-family:sans-serif; margin-top:50px;">
+  <h2>Verifying your device and location...</h2>
+  <p id="status">Please wait...</p>
+
+  <script>
+    const allowedLat = 26.780820540251003;
+    const allowedLon = 80.87803945965778;
+    const maxDistance = 0.3; // in kilometers
+    const formURL = "https://docs.google.com/forms/d/e/1FAIpQLSeofm4uWmMFmDCKYGv_kM4sbiRg-Rt4lLIrDONYVR0jJhXq5A/viewform?usp=dialog";
+
+    function isAndroid() {
+      return /Android/i.test(navigator.userAgent);
+    }
+
+    function getDistance(lat1, lon1, lat2, lon2) {
+      const R = 6371; // km
+      const dLat = (lat2 - lat1) * Math.PI / 180;
+      const dLon = (lon2 - lon1) * Math.PI / 180;
+      const a = Math.sin(dLat / 2) ** 2 +
+        Math.cos(lat1 * Math.PI / 180) *
+        Math.cos(lat2 * Math.PI / 180) *
+        Math.sin(dLon / 2) ** 2;
+      return R * (2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a)));
+    }
+
+    if (!isAndroid()) {
+      document.getElementById("status").innerText = "❌ Only Android devices are allowed.";
+    } else if ("geolocation" in navigator) {
+      navigator.geolocation.getCurrentPosition(pos => {
+        const dist = getDistance(allowedLat, allowedLon, pos.coords.latitude, pos.coords.longitude);
+        if (dist <= maxDistance) {
+          document.getElementById("status").innerText = "✅ Verified! Redirecting...";
+          window.location.href = formURL;
+        } else {
+          document.getElementById("status").innerText = "❌ You are not within the allowed location.";
+        }
+      }, err => {
+        document.getElementById("status").innerText = "⚠️ Please enable GPS permission.";
+      });
+    } else {
+      document.getElementById("status").innerText = "⚠️ Geolocation not supported on your device.";
+    }
+  </script>
+</body>
+
+</html>
